@@ -193,11 +193,11 @@ resource "tfe_variable" "tfvars" {
 
 ################ Azure Federated credentials Generation ##################################################
 
-provider "azuread" {
-  tenant_id = var.tenant_id
-}
+#provider "azuread" {
+#  tenant_id = var.tenant_id
+#}
 
-data "azurerm_subscription" "current" {}
+#data "azurerm_subscription" "current" {}
 
 # Federated identity credential for plan phase
 # resource "azuread_application_federated_identity_credential" "tfc_federated_credential_plan" {
