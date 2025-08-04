@@ -2,7 +2,7 @@ terraform {
 
   cloud {
 
-    organization = "Mccain_Foods"
+    organization = "example-org-feb65b"
 
     workspaces {
       name = "mf-platform-app-demo"
