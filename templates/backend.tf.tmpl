@@ -1,0 +1,9 @@
+terraform {
+  backend "remote" {
+    organization = "${org_name}"
+
+    workspaces {
+      name = "${workspace_name}"
+    }
+  }
+}
