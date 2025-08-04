@@ -1,6 +1,6 @@
 github_token = "<secret>"
 
-github_organization = "McCainFoods"
+github_organization = "pathakas"
 # template_repo       = "mf-mdm-landing-zone"
 # new_repo_name       = ["mf-mdm-landing-zone1", "mf-mdm-landing-zone2"]
 new_repo_name = {
