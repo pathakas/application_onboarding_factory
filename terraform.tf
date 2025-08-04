@@ -21,14 +21,14 @@ terraform {
       source  = "hashicorp/tfe"
       version = "~> 0.50.0"
     }
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0.2"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.34.1"
-    }
+    # azurerm = {
+    #   source  = "hashicorp/azurerm"
+    #   version = "~> 3.0.2"
+    # }
+    # azuread = {
+    #   source  = "hashicorp/azuread"
+    #   version = "~> 2.34.1"
+    # }
   }
   # required_version = ">= 1.1.0"
 }
@@ -41,11 +41,11 @@ provider "tfe" {
   token        = var.tfe_token
   organization = "Mccain_Foods"
 }
-provider "azurerm" {
-  features {}
-  subscription_id = var.subscription_id
-  client_id       = var.client_id
-  client_secret   = var.client_secret
-  tenant_id       = var.tenant_id
-  #skip_provider_registration = true
-}
+# provider "azurerm" {
+#   features {}
+#   subscription_id = var.subscription_id
+#   client_id       = var.client_id
+#   client_secret   = var.client_secret
+#   tenant_id       = var.tenant_id
+#   #skip_provider_registration = true
+# }
