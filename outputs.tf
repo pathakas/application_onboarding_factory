@@ -8,6 +8,11 @@ output "repository_https_urls" {
   value       = [for repo in github_repository.new_repo : repo.html_url]
 }
 
+output "passed_github_token_length" {
+  value     = length(var.github_token)
+  sensitive = true
+}
+
 
 output "repository_ssh_urls" {
   description = "List of GitHub repository SSH clone URLs"
