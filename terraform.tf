@@ -34,12 +34,12 @@ terraform {
 }
 provider "github" {
   token = var.github_token != "" ? var.github_token : getenv("GITHUB_TOKEN")
-  owner = "McCainFoods"
+  owner = "pathakas"
 }
 
 provider "tfe" {
   token        = var.tfe_token
-  organization = "Mccain_Foods"
+  organization = "example-org-feb65b"
 }
 # provider "azurerm" {
 #   features {}
