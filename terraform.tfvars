@@ -8,7 +8,7 @@ new_repo_name = {
   "mf-dt-azrabc-sampleapp-infra-repo"      = "mf-platform-azure-infra-template-main"
   "mf-dt-azrabc-sampleapp-app-repo"        = "mf-platform-azure-app-reactjs-template-main"
 }
-repo_visibility = "private"
+repo_visibility = "public"
 
 repo_secrets = {
   "mf-dt-azrabc-sampleapp-foundation-repo" = {
