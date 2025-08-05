@@ -1,4 +1,4 @@
-github_token = "<secret>"
+# github_token = "<secret>"
 
 github_organization = "pathakas"
 # template_repo       = "mf-mdm-landing-zone"
