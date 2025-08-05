@@ -1,0 +1,32 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:  # Manual trigger from the Actions UI
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    environment: production  # Optional: add environments/protection
+
+    env:
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+      TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+          TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
