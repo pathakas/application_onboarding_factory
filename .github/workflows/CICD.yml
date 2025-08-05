@@ -252,7 +252,8 @@ jobs:
         run: terraform plan -out=tfplan
       
       - name: Debug GH_TOKEN
-        run: echo "TF_VAR_github_token set to: ${TF_VAR_github_token:0:4}***"
+        run: |
+          echo "TF_VAR_github_token set to: ${TF_VAR_github_token:0:4}"
         env:
           TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
           
