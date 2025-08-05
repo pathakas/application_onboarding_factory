@@ -115,7 +115,7 @@ repo_team_collaborators = {
   # ]
 }
 
-#tfc_organization = "Mccain_Foods"
+tfc_organization = "example-org-feb65b"
 #tfe_token        = "<secret>"
 
 projects = {
