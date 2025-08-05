@@ -4,9 +4,9 @@ github_organization = "pathakas"
 # template_repo       = "mf-mdm-landing-zone"
 # new_repo_name       = ["mf-mdm-landing-zone1", "mf-mdm-landing-zone2"]
 new_repo_name = {
-  "mf-dt-azrabc-sampleapp-foundation-repo" = "mf-platform-azure-foundation-template"
-  "mf-dt-azrabc-sampleapp-infra-repo"      = "mf-platform-azure-infra-template"
-  "mf-dt-azrabc-sampleapp-app-repo"        = "mf-platform-azure-app-reactjs-template"
+  "mf-dt-azrabc-sampleapp-foundation-repo" = "mf-platform-azure-foundation-template-main"
+  "mf-dt-azrabc-sampleapp-infra-repo"      = "mf-platform-azure-infra-template-main"
+  "mf-dt-azrabc-sampleapp-app-repo"        = "mf-platform-azure-app-reactjs-template-main"
 }
 repo_visibility = "private"
 
