@@ -115,8 +115,8 @@ repo_team_collaborators = {
   # ]
 }
 
-tfc_organization = "Mccain_Foods"
-tfe_token        = "<secret>"
+#tfc_organization = "Mccain_Foods"
+#tfe_token        = "<secret>"
 
 projects = {
   mf-dt-azrabc-sampleapp-tfcprj = {
