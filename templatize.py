@@ -30,7 +30,7 @@ def build_context():
     ctx['FOUNDATION_REPO'] = f"{base}-foundation-repo"
     ctx['INFRA_REPO']      = f"{base}-infra-repo"
     ctx['APP_REPO']        = f"{base}-app-repo"
-    ctx['REPO_VISIBILITY'] = os.environ.get("REPO_VISIBILITY", "private")
+    ctx['REPO_VISIBILITY'] = os.environ.get("REPO_VISIBILITY", "public")
     ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "pathakas")
     # Add other context/env values as needed
 
