@@ -10,6 +10,7 @@ REQUIRED_VARS = [
     "APP_NAME",
     "APP_PLATFORM",
     "APP_ENVT",
+    "GH_TOKEN_FOUNDATION",
 ]
 
 def build_context():
@@ -32,6 +33,14 @@ def build_context():
     ctx['APP_REPO']        = f"{base}-app-repo"
     ctx['REPO_VISIBILITY'] = os.environ.get("REPO_VISIBILITY", "public")
     ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "pathakas")
+
+    #Derived secrets
+    ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION")
+    ctx['AZURE_SUBSCRIPTION_ID_FOUNDATION'] = os.environ.get("AZURE_SUBSCRIPTION_ID_FOUNDATION")
+    ctx['TF_API_TOKEN_FOUNDATION'] = os.environ.get("TF_API_TOKEN_FOUNDATION")
+    ctx['AAD_CLIENT_ID_FOUNDATION'] = os.environ.get("AAD_CLIENT_ID_FOUNDATION")
+    ctx['AAD_CLIENT_SECRET_FOUNDATION'] = os.environ.get("AAD_CLIENT_SECRET_FOUNDATION")
+    ctx['AZURE_CREDENTIALS_FOUNDATION'] = os.environ.get("AZURE_CREDENTIALS_FOUNDATION")
     # Add other context/env values as needed
 
     # Merge in ALL environment variables (for other templated secrets)

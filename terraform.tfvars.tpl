@@ -20,18 +20,13 @@ new_repo_name = {
 # ————————————————————————————
 repo_secrets = {
   "${FOUNDATION_REPO}" = {
-    GH_TOKEN              = "<secret>"
-    AZURE_SUBSCRIPTION_ID = "<secret>"
-    TF_API_TOKEN          = "<secret>"
-    AAD_CLIENT_ID         = "<secret>"
-    AAD_CLIENT_SECRET     = "<secret>"
+    GH_TOKEN              = "${GH_TOKEN_FOUNDATION}"
+    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_FOUNDATION}"
+    TF_API_TOKEN          = "${TF_API_TOKEN_FOUNDATION}"
+    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_FOUNDATION}"
+    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_FOUNDATION}"
     AZURE_CREDENTIALS     = <<EOT
-{
-  "clientId": "<secret>",
-  "clientSecret": "<secret>",
-  "subscriptionId": "<secret>",
-  "tenantId": "<secret>"
-}
+${AZURE_CREDENTIALS_FOUNDATION}
 EOT
   }
 
