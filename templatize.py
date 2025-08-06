@@ -35,7 +35,7 @@ def build_context():
     ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "pathakas")
 
     #Derived secrets
-    ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION")
+    ctx['GH_TOKEN_FOUNDATION'] = os.environ.get("GH_TOKEN_FOUNDATION")
     ctx['AZURE_SUBSCRIPTION_ID_FOUNDATION'] = os.environ.get("AZURE_SUBSCRIPTION_ID_FOUNDATION")
     ctx['TF_API_TOKEN_FOUNDATION'] = os.environ.get("TF_API_TOKEN_FOUNDATION")
     ctx['AAD_CLIENT_ID_FOUNDATION'] = os.environ.get("AAD_CLIENT_ID_FOUNDATION")
