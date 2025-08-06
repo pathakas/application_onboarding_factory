@@ -93,7 +93,7 @@ repo_team_collaborators = {
 # Terraform Cloud settings
 # ————————————————————————————
 tfc_organization = "example-org-feb65b"
-tfe_token        = "${TFE_TOKEN}"
+#tfe_token        = "${TFE_TOKEN}"
 
 # ————————————————————————————
 # Projects & workspaces (injected as a block)
