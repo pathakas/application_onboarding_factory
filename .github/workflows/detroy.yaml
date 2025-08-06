@@ -2,6 +2,31 @@ name: Terraform Destroy
 
 on:
   workflow_dispatch:  # Manual trigger from the Actions UI
+    inputs:
+      organization_code:
+        description: 'Organization Code'
+        required: true
+        default: 'mf'
+      lob_code:
+        description: 'lob Code'
+        required: true
+        default: 'daia'
+      app_code:
+        description: 'Application Code'
+        required: true
+        default: 'azraaa'
+      application_name:
+        description: 'Infra repo name'
+        required: true
+        default: 'mf-dt-azrabc-sampleapp-infra-repo'
+      application_platform:
+        description: 'Application Platform'
+        required: true
+        default: 'mf-dt-azrabc-sampleapp-app-repo'
+      environments:
+        description: "Environments JSON"
+        required: true
+        default: '[{"name":"Development","code":"dev","subscription_id":""},{"name":"QA","code":"qat","subscription_id":""}]'
 
 jobs:
   terraform-destroy:
