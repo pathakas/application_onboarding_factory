@@ -17,6 +17,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate terraform.tfvars from template, env, and input.json
+        run: python templatize.py
+        env:
+          # Use workflow input, fallback to secrets/defaults if missing
+          ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
+          LOB_CODE: ${{ github.event.inputs.lob_code }}
+          APP_CODE: ${{ github.event.inputs.app_code }}
+          APP_NAME: ${{ github.event.inputs.application_name }}
+          APP_PLATFORM: ${{ github.event.inputs.application_platform }}
+          APP_ENVT: ${{ github.event.inputs.environments }}
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
