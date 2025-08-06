@@ -4,7 +4,7 @@
 # Core settings
 # ————————————————————————————
 github_organization = "${GITHUB_ORGANIZATION}"
-repo_visibility     = "${REPO_VISIBILITY}"
+repo_visibility     = "public"
 
 # ————————————————————————————
 # Repository creation mapping
@@ -20,35 +20,50 @@ new_repo_name = {
 # ————————————————————————————
 repo_secrets = {
   "${FOUNDATION_REPO}" = {
-    GH_TOKEN              = "${GHE_FOUNDATION_TOKEN}"
-    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_FOUNDATION}"
-    TF_API_TOKEN          = "${TF_API_TOKEN_FOUNDATION}"
-    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_FOUNDATION}"
-    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_FOUNDATION}"
+    GH_TOKEN              = "<secret>"
+    AZURE_SUBSCRIPTION_ID = "<secret>"
+    TF_API_TOKEN          = "<secret>"
+    AAD_CLIENT_ID         = "<secret>"
+    AAD_CLIENT_SECRET     = "<secret>"
     AZURE_CREDENTIALS     = <<EOT
-${AZURE_CREDENTIALS_FOUNDATION}
+{
+  "clientId": "<secret>",
+  "clientSecret": "<secret>",
+  "subscriptionId": "<secret>",
+  "tenantId": "<secret>"
+}
 EOT
   }
 
   "${INFRA_REPO}" = {
-    GH_TOKEN              = "${GHE_INFRA_TOKEN}"
-    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_INFRA}"
-    TF_API_TOKEN          = "${TF_API_TOKEN_INFRA}"
-    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_INFRA}"
-    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_INFRA}"
+    GH_TOKEN              = "<secret>"
+    AZURE_SUBSCRIPTION_ID = "<secret>"
+    TF_API_TOKEN          = "<secret>"
+    AAD_CLIENT_ID         = "<secret>"
+    AAD_CLIENT_SECRET     = "<secret>"
     AZURE_CREDENTIALS     = <<EOT
-${AZURE_CREDENTIALS_INFRA}
+{
+  "clientId": "<secret>",
+  "clientSecret": "<secret>",
+  "subscriptionId": "<secret>",
+  "tenantId": "<secret>"
+}
 EOT
   }
 
   "${APP_REPO}" = {
-    GH_TOKEN              = "${GHE_APP_TOKEN}"
-    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_APP}"
-    TF_API_TOKEN          = "${TF_API_TOKEN_APP}"
-    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_APP}"
-    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_APP}"
+    GH_TOKEN              = "<secret>"
+    AZURE_SUBSCRIPTION_ID = "<secret>"
+    TF_API_TOKEN          = "<secret>"
+    AAD_CLIENT_ID         = "<secret>"
+    AAD_CLIENT_SECRET     = "<secret>"
     AZURE_CREDENTIALS     = <<EOT
-${AZURE_CREDENTIALS_APP}
+{
+  "clientId": "<secret>",
+  "clientSecret": "<secret>",
+  "subscriptionId": "<secret>",
+  "tenantId": "<secret>"
+}
 EOT
   }
 }
@@ -57,26 +72,33 @@ EOT
 # Collaborators (optional placeholders)
 # ————————————————————————————
 repo_user_collaborators = {
-  # "REPO_NAME" = [
-  #   { username = "${USER1}", permission = "${PERMISSION1}" },
-  # ]
+   "${FOUNDATION_REPO}" = []
+   "${INFRA_REPO}" = []
+   "${APP_REPO}" = []
 }
 
 repo_team_collaborators = {
-  # "REPO_NAME" = [
-  #   { team_slug = "${TEAM1}", permission = "${PERMISSION1}" },
-  # ]
+"${FOUDATION_REPO}" = [
+
+    ],
+    "${INFRA_REPO}" = [
+
+    ],
+    "${APPS_REPO}" = [
+
+    ],    
 }
 
 # ————————————————————————————
 # Terraform Cloud settings
 # ————————————————————————————
-tfc_organization = "${TFC_ORGANIZATION}"
+tfc_organization = "example-org-feb65b"
 tfe_token        = "${TFE_TOKEN}"
 
 # ————————————————————————————
 # Projects & workspaces (injected as a block)
 # ————————————————————————————
+
 projects = {
   mf-dt-azrabc-sampleapp-tfcprj = {
     workspaces = {
@@ -145,19 +167,11 @@ projects = {
     }
   }
 }
-
-# ————————————————————————————
-# Azure AD & other identifiers
-# ————————————————————————————
-existing_aad_app_display_name = "${EXISTING_AAD_APP_DISPLAY_NAME}"
-application_object_id         = "${APPLICATION_OBJECT_ID}"
-principal_id                  = "${PRINCIPAL_ID}"
-tenant_id                     = "${TENANT_ID}"
-
-# ————————————————————————————
-# GitHub Projects and SP creds
-# ————————————————————————————
-ghreposproject  = "${GHREPOSPROJECT}"
-subscription_id = "${SUBSCRIPTION_ID}"
-client_id       = "${CLIENT_ID}"
-client_secret   = "${CLIENT_SECRET}"
+existing_aad_app_display_name = "Terraform MF Core Infrastructure Prod"
+application_object_id         = "<specific>"
+principal_id                  = "<secret>"
+tenant_id                     = "<secret>"
+ghreposproject                = "mf-dt-azrabc-sampleapp-ghprj"
+subscription_id               = "<secret>"
+client_id                     = "<secret>"
+client_secret                 = "<secret>"
