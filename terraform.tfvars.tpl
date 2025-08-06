@@ -4,7 +4,7 @@
 # Core settings
 # ————————————————————————————
 github_organization = "${GITHUB_ORGANIZATION}"
-repo_visibility     = "public"
+repo_visibility     = "${REPO_VISIBILITY}"
 
 # ————————————————————————————
 # Repository creation mapping
