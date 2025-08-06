@@ -78,13 +78,13 @@ repo_user_collaborators = {
 }
 
 repo_team_collaborators = {
-"${FOUDATION_REPO}" = [
+"${FOUNDATION_REPO}" = [
 
     ],
     "${INFRA_REPO}" = [
 
     ],
-    "${APPS_REPO}" = [
+    "${APP_REPO}" = [
 
     ],    
 }
