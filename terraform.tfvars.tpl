@@ -77,7 +77,74 @@ tfe_token        = "${TFE_TOKEN}"
 # ————————————————————————————
 # Projects & workspaces (injected as a block)
 # ————————————————————————————
-projects = ${PROJECTS_BLOCK}
+projects = {
+  mf-dt-azrabc-sampleapp-tfcprj = {
+    workspaces = {
+      mf-dt-azrabc-sampleapp-foundation-tfcws = {
+        vcs_repo = "mf-dt-azrabc-sampleapp-foundation-repo"
+        tf_vars = {
+          ARM_SUBSCRIPTION_ID     = "<secret>"
+          ARM_CLIENT_ID           = "<secret>"
+          ARM_TENANT_ID           = "<secret>"
+          TFC_AZURE_PROVIDER_AUTH = "true"
+          GITHUB_TOKEN            = "<secret>"
+          ARM_CLIENT_SECRET       = "<secret>"
+          AAD_CLIENT_ID           = "<secret>"
+          AAD_CLIENT_SECRET       = "<secret>"
+          TFC_AZURE_RUN_CLIENT_ID = "<secret>"
+        }
+      }
+      mf-dt-azrabc-sampleapp-dev-tfcws = {
+        vcs_repo = "mf-dt-azrabc-sampleapp-infra-repo"
+        tf_vars = {
+          ARM_SUBSCRIPTION_ID     = "<secret>"
+          ARM_CLIENT_ID           = "<secret>"
+          ARM_TENANT_ID           = "<secret>"
+          TFC_AZURE_PROVIDER_AUTH = "true"
+          GITHUB_TOKEN            = "<secret>"
+          ARM_CLIENT_SECRET       = "<secret>"
+          TFC_AZURE_RUN_CLIENT_ID = "<secret>"
+        }
+      }
+      mf-dt-azrabc-sampleapp-qat-tfcws = {
+        vcs_repo = "mf-dt-azrabc-sampleapp-infra-repo"
+        tf_vars = {
+          ARM_SUBSCRIPTION_ID     = "<secret>"
+          ARM_CLIENT_ID           = "<secret>"
+          ARM_TENANT_ID           = "<secret>"
+          TFC_AZURE_PROVIDER_AUTH = "true"
+          GITHUB_TOKEN            = "<secret>"
+          ARM_CLIENT_SECRET       = "<secret>"
+          TFC_AZURE_RUN_CLIENT_ID = "<secret>"
+        }
+      }
+      mf-dt-azrabc-sampleapp-prd-tfcws = {
+        vcs_repo = "mf-dt-azrabc-sampleapp-infra-repo"
+        tf_vars = {
+          ARM_SUBSCRIPTION_ID     = "<secret>"
+          ARM_CLIENT_ID           = "<secret>"
+          ARM_TENANT_ID           = "<secret>"
+          TFC_AZURE_PROVIDER_AUTH = "true"
+          GITHUB_TOKEN            = "<secret>"
+          ARM_CLIENT_SECRET       = "<secret>"
+          TFC_AZURE_RUN_CLIENT_ID = "<secret>"
+        }
+      }
+      mf-dt-azrabc-sampleapp-drr-tfcws = {
+        vcs_repo = "mf-dt-azrabc-sampleapp-infra-repo"
+        tf_vars = {
+          ARM_SUBSCRIPTION_ID     = "<secret>"
+          ARM_CLIENT_ID           = "<secret>"
+          ARM_TENANT_ID           = "<secret>"
+          TFC_AZURE_PROVIDER_AUTH = "true"
+          GITHUB_TOKEN            = "<secret>"
+          ARM_CLIENT_SECRET       = "<secret>"
+          TFC_AZURE_RUN_CLIENT_ID = "<secret>"
+        }
+      }
+    }
+  }
+}
 
 # ————————————————————————————
 # Azure AD & other identifiers
