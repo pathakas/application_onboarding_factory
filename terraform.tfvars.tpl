@@ -31,34 +31,24 @@ EOT
   }
 
   "${INFRA_REPO}" = {
-    GH_TOKEN              = "<secret>"
-    AZURE_SUBSCRIPTION_ID = "<secret>"
-    TF_API_TOKEN          = "<secret>"
-    AAD_CLIENT_ID         = "<secret>"
-    AAD_CLIENT_SECRET     = "<secret>"
+    GH_TOKEN              = "${GH_TOKEN_INFRA}"
+    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_INFRA}"
+    TF_API_TOKEN          = "${TF_API_TOKEN_INFRA}"
+    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_INFRA}"
+    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_INFRA}"
     AZURE_CREDENTIALS     = <<EOT
-{
-  "clientId": "<secret>",
-  "clientSecret": "<secret>",
-  "subscriptionId": "<secret>",
-  "tenantId": "<secret>"
-}
+${AZURE_CREDENTIALS_INFRA}
 EOT
   }
 
   "${APP_REPO}" = {
-    GH_TOKEN              = "<secret>"
-    AZURE_SUBSCRIPTION_ID = "<secret>"
-    TF_API_TOKEN          = "<secret>"
-    AAD_CLIENT_ID         = "<secret>"
-    AAD_CLIENT_SECRET     = "<secret>"
+    GH_TOKEN              = "${GH_TOKEN_APP}"
+    AZURE_SUBSCRIPTION_ID = "${AZURE_SUBSCRIPTION_ID_APP}"
+    TF_API_TOKEN          = "${TF_API_TOKEN_APP}"
+    AAD_CLIENT_ID         = "${AAD_CLIENT_ID_APP}"
+    AAD_CLIENT_SECRET     = "${AAD_CLIENT_SECRET_APP}"
     AZURE_CREDENTIALS     = <<EOT
-{
-  "clientId": "<secret>",
-  "clientSecret": "<secret>",
-  "subscriptionId": "<secret>",
-  "tenantId": "<secret>"
-}
+${AZURE_CREDENTIALS_APP}
 EOT
   }
 }

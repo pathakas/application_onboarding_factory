@@ -64,6 +64,20 @@ jobs:
           AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
           AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
           AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
+          # Use workflow secrets Foundational repo
+          GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
+          AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
+          TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
+          AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
+          AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
+          AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
+          # Use workflow secrets Foundational repo
+          GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
+          AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
+          TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
+          AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
+          AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
+          AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
 
           
 

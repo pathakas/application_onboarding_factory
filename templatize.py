@@ -11,6 +11,23 @@ REQUIRED_VARS = [
     "APP_PLATFORM",
     "APP_ENVT",
     "GH_TOKEN_FOUNDATION",
+    "AZURE_SUBSCRIPTION_ID_FOUNDATION",
+    "TF_API_TOKEN_FOUNDATION",
+    "AAD_CLIENT_ID_FOUNDATION",
+    "AAD_CLIENT_SECRET_FOUNDATION",
+    "AZURE_CREDENTIALS_FOUNDATION",
+    "GH_TOKEN_INFRA",
+    "AZURE_SUBSCRIPTION_ID_INFRA",
+    "TF_API_TOKEN_INFRA",
+    "AAD_CLIENT_ID_INFRA",
+    "AAD_CLIENT_SECRET_INFRA",
+    "AZURE_CREDENTIALS_INFRA",
+    "GH_TOKEN_APP",
+    "AZURE_SUBSCRIPTION_ID_APP",
+    "TF_API_TOKEN_APP",
+    "AAD_CLIENT_ID_APP",
+    "AAD_CLIENT_SECRET_APP",
+    "AZURE_CREDENTIALS_APP",
 ]
 
 def build_context():
@@ -34,13 +51,30 @@ def build_context():
     ctx['REPO_VISIBILITY'] = os.environ.get("REPO_VISIBILITY", "public")
     ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "pathakas")
 
-    #Derived secrets
+    #Derived secrets Foundational Repo
     ctx['GH_TOKEN_FOUNDATION'] = os.environ.get("GH_TOKEN_FOUNDATION")
     ctx['AZURE_SUBSCRIPTION_ID_FOUNDATION'] = os.environ.get("AZURE_SUBSCRIPTION_ID_FOUNDATION")
     ctx['TF_API_TOKEN_FOUNDATION'] = os.environ.get("TF_API_TOKEN_FOUNDATION")
     ctx['AAD_CLIENT_ID_FOUNDATION'] = os.environ.get("AAD_CLIENT_ID_FOUNDATION")
     ctx['AAD_CLIENT_SECRET_FOUNDATION'] = os.environ.get("AAD_CLIENT_SECRET_FOUNDATION")
     ctx['AZURE_CREDENTIALS_FOUNDATION'] = os.environ.get("AZURE_CREDENTIALS_FOUNDATION")
+
+    #Derived secrets Infra Repo
+    ctx['GH_TOKEN_INFRA'] = os.environ.get("GH_TOKEN_INFRA")
+    ctx['AZURE_SUBSCRIPTION_ID_INFRA'] = os.environ.get("AZURE_SUBSCRIPTION_ID_INFRA")
+    ctx['TF_API_TOKEN_INFRA'] = os.environ.get("TF_API_TOKEN_INFRA")
+    ctx['AAD_CLIENT_ID_INFRA'] = os.environ.get("AAD_CLIENT_ID_INFRA")
+    ctx['AAD_CLIENT_SECRET_INFRA'] = os.environ.get("AAD_CLIENT_SECRET_INFRA")
+    ctx['AZURE_CREDENTIALS_INFRA'] = os.environ.get("AZURE_CREDENTIALS_INFRA")
+
+    #Derived secrets APP Repo
+    ctx['GH_TOKEN_APP'] = os.environ.get("GH_TOKEN_APP")
+    ctx['AZURE_SUBSCRIPTION_ID_APP'] = os.environ.get("AZURE_SUBSCRIPTION_ID_APP")
+    ctx['TF_API_TOKEN_APP'] = os.environ.get("TF_API_TOKEN_APP")
+    ctx['AAD_CLIENT_ID_APP'] = os.environ.get("AAD_CLIENT_ID_APP")
+    ctx['AAD_CLIENT_SECRET_APP'] = os.environ.get("AAD_CLIENT_SECRET_APP")
+    ctx['AZURE_CREDENTIALS_APP'] = os.environ.get("AZURE_CREDENTIALS_APP")
+
     # Add other context/env values as needed
 
     # Merge in ALL environment variables (for other templated secrets)
