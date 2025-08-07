@@ -29,11 +29,11 @@ on:
       application_name:
         description: 'Infra repo name'
         required: true
-        default: 'mf-dt-azrabc-sampleapp-infra-repo'
+        default: 'sampleapp'
       application_platform:
         description: 'Application Platform'
         required: true
-        default: 'mf-dt-azrabc-sampleapp-app-repo'
+        default: 'reactjs'
       environments:
         description: "Environments JSON"
         required: true
@@ -371,9 +371,9 @@ jobs:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
       
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          repository: pathakas/app-service
-          event-type: my-event
+      # - name: Repository Dispatch
+      #   uses: peter-evans/repository-dispatch@v3
+      #   with:
+      #     token: ${{ secrets.GH_TOKEN }}
+      #     repository: pathakas/app-service
+      #     event-type: my-event
