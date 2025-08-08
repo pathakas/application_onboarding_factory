@@ -437,3 +437,12 @@ jobs:
           APP_CODE: ${{ github.event.inputs.app_code }}
           APP_NAME: ${{ github.event.inputs.application_name }}
           APP_PLATFORM: ${{ github.event.inputs.application_platform }}
+          # 5. Commit & push changes (verified action)
+
+      - name: Commit & push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          repository: ./target
+          commit_message: "Automated tfvars generation from factory"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
