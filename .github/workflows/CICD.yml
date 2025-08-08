@@ -394,7 +394,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        repo: ${{ fromJSON(needs.tf-apply.outputs.repos) }}
+        repo: ${{ fromJSON(needs.terraformapply.outputs.repos) }}
     steps:
       - name: Show which repo
         run: echo "Working on ${{ matrix.repo }}"
