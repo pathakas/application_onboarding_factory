@@ -404,11 +404,19 @@ jobs:
         run: |
           echo 'repos from previous job:'
           echo '${{ needs.terraformapply.outputs.repos }}'
-      - name: Checkout code
+
+      - name: Checkout factory repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          path: factory
+    
+      - name: Checkout matrix repo
         uses: actions/checkout@v4
         with:
           repository: ${{ github.repository_owner }}/${{ matrix.repo }}
           token: ${{ secrets.GH_TOKEN }}
+          path: target
           fetch-depth: 1
   
       - name: Set up Python
@@ -417,6 +425,9 @@ jobs:
           python-version: "3.11"
       
       - name: update artifacts
-        run: python scripts/generate_tfvars.py
+        run: |
+          cd factory
+          python scripts/generate_tfvars.py ../target
+          ls -lrth
         env:
           APP_ENVT: ${{ github.event.inputs.environments }}
