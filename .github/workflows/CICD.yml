@@ -426,10 +426,9 @@ jobs:
       
       - name: Generate tfvars
         run: |
-          cd factory
-          python3 scripts/generate_tfvars.py ../target/terraform.tfvars
+          python3 factory/scripts/generate_tfvars.py /target/terraform.tfvars
 
-          ls -lrth ../target
+          ls -lrth /target
         env:
           REPO_NAME: ${{ github.repository_owner }}/${{ matrix.repo }}
           APP_ENVT: ${{ github.event.inputs.environments }}
