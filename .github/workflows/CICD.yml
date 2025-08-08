@@ -416,5 +416,7 @@ jobs:
         with:
           python-version: "3.11"
       
-      - name: Check Repos
-        run: ls -lrth
+      - name: update artifacts
+        run: python scripts/generate_tfvars.py
+        env:
+          APP_ENVT: ${{ github.event.inputs.environments }}
