@@ -111,12 +111,11 @@ jobs:
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.0
 
-  # terraform-checkov:
-  #   name: Terraform Checkov Scanning
-  #   runs-on: ubuntu-latest
-  #   # environment: production
-  #   env:
-  #     TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+  #  terraform-checkov:
+      - name: Terraform Checkov Scanning
+        runs-on: ubuntu-latest
+        env:
+        TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
   steps:
       - name: Checkout code
@@ -136,6 +135,7 @@ jobs:
         with:
            directory: .
            framework: terraform
+
 
   terraform-plan:
     name: Terraform Plan
