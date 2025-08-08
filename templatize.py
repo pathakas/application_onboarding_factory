@@ -49,7 +49,7 @@ def build_context():
     ctx['INFRA_REPO']      = f"{base}-infra-repo"
     ctx['APP_REPO']        = f"{base}-app-repo"
     ctx['REPO_VISIBILITY'] = os.environ.get("REPO_VISIBILITY", "public")
-    ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "pathakas")
+    ctx['GITHUB_ORGANIZATION'] = os.environ.get("GITHUB_ORGANIZATION", "Srijan-DevOpsEr")
 
     #Derived secrets Foundational Repo
     ctx['GH_TOKEN_FOUNDATION'] = os.environ.get("GH_TOKEN_FOUNDATION")
