@@ -199,11 +199,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      # - name: Log in to Azure
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-      #     enable-AzPSSession: true
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
               
       - name: Terraform Plan                
         run: terraform plan -out=plan.out
@@ -245,10 +245,10 @@ jobs:
       - name: Convert to JSON
         run: terraform show -json plan.out > tfplan.json
 
-      # - name: Run Checkov
-      #   uses: bridgecrewio/checkov-action@master
-      #   with:
-      #     file: tfplan.json
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          file: tfplan.json
 
   compliance:
     name: Terraform Compliance
@@ -341,11 +341,11 @@ jobs:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      # - name: Log in to Azure
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-      #     enable-AzPSSession: true
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
 
       - name: Terraform Init
         run: terraform init 
