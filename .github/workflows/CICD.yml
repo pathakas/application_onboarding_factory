@@ -145,7 +145,8 @@ jobs:
       terraform-validate,
       terraform-tfsec,
       terraform-checkov
-    ]
+      ]
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -155,40 +156,40 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Generate terraform.tfvars from template, env, and input.json
-        run: python templatize.py
-        env:
-          # Use workflow input
-          ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
-          LOB_CODE: ${{ github.event.inputs.lob_code }}
-          APP_CODE: ${{ github.event.inputs.app_code }}
-          APP_NAME: ${{ github.event.inputs.application_name }}
-          APP_PLATFORM: ${{ github.event.inputs.application_platform }}
-          APP_ENVT: ${{ github.event.inputs.environments }}
-          # Foundational Repo Settings
-          GH_TOKEN_FOUNDATION: ${{ secrets.GH_TOKEN_FOUNDATION }}
-          AZURE_SUBSCRIPTION_ID_FOUNDATION: ${{ secrets.AZURE_SUBSCRIPTION_ID_FOUNDATION }}
-          TF_API_TOKEN_FOUNDATION: ${{ secrets.TF_API_TOKEN_FOUNDATION }}
-          AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
-          AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
-          AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
-          # Infra Repo Settings
-          GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
-          AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
-          TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
-          AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
-          AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
-          AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
-          # App Repo Settings
-          GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
-          AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
-          TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
-          AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
-          AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
-          AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
+      # - name: Generate terraform.tfvars from template, env, and input.json
+      #   run: python templatize.py
+      #   env:
+      #     # Use workflow input
+      #     ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
+      #     LOB_CODE: ${{ github.event.inputs.lob_code }}
+      #     APP_CODE: ${{ github.event.inputs.app_code }}
+      #     APP_NAME: ${{ github.event.inputs.application_name }}
+      #     APP_PLATFORM: ${{ github.event.inputs.application_platform }}
+      #     APP_ENVT: ${{ github.event.inputs.environments }}
+      #     # Foundational Repo Settings
+      #     GH_TOKEN_FOUNDATION: ${{ secrets.GH_TOKEN_FOUNDATION }}
+      #     AZURE_SUBSCRIPTION_ID_FOUNDATION: ${{ secrets.AZURE_SUBSCRIPTION_ID_FOUNDATION }}
+      #     TF_API_TOKEN_FOUNDATION: ${{ secrets.TF_API_TOKEN_FOUNDATION }}
+      #     AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
+      #     AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
+      #     AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
+      #     # Infra Repo Settings
+      #     GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
+      #     AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
+      #     TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
+      #     AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
+      #     AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
+      #     AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
+      #     # App Repo Settings
+      #     GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
+      #     AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
+      #     TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
+      #     AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
+      #     AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
+      #     AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
 
-      - name: Display generated tfvars (debug)
-        run: cat terraform.tfvars 
+      # - name: Display generated tfvars (debug)
+      #   run: cat terraform.tfvars 
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
