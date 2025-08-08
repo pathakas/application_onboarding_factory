@@ -34,7 +34,7 @@ terraform {
 }
 provider "github" {
   token = var.github_token != "" ? var.github_token : getenv("GITHUB_TOKEN")
-  owner = "pathakas"
+  owner = "Srijan-DevOpsEr"
 }
 
 provider "tfe" {
