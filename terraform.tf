@@ -2,7 +2,7 @@ terraform {
 
   cloud {
 
-    organization = "example-org-feb65b"
+    organization = "devops-warriors"
 
     workspaces {
       name = "mf-platform-app-demo"
@@ -39,7 +39,7 @@ provider "github" {
 
 provider "tfe" {
   token        = var.tfe_token
-  organization = "example-org-feb65b"
+  organization = "devops-warriors"
 }
 # provider "azurerm" {
 #   features {}
