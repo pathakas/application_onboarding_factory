@@ -288,6 +288,8 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
     needs: [checkov, compliance]
+    outputs:
+      repos: ${{ steps.capture.outputs.repos }}   # <-- expose step output
 
     steps:
       - name: Checkout code
@@ -381,17 +383,10 @@ jobs:
       - name: Capture repository_names
         id: capture
         run: |
-          set -e
-          # Make sure this matches your TF output name exactly:
-          # output "repository_names" { value = [...] }
           out="$(terraform output -json repository_names || true)"
-
-          # Normalize to compact JSON or default to [] if empty/null
           if [ -z "$out" ] || [ "$out" = "null" ]; then
-            echo "No repos found; setting empty list."
-            echo "repos=[]" >> "$GITHUB_OUTPUT"
+            echo 'repos=[]' >> "$GITHUB_OUTPUT"
           else
-            # compact (no newlines) to avoid multi-line output issues
             echo "repos=$(echo "$out" | jq -c '.')" >> "$GITHUB_OUTPUT"
           fi
 
@@ -402,7 +397,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        repo: ${{ fromJSON(needs.terraformapply.outputs.repos) }}
+        repo: ${{ fromJSON(needs.terraformapply.outputs.repos || '[]') }}
     steps:
-      - name: Show which repo
-        run: echo "Working on ${{ matrix.repo }}"
+      - name: Debug repos output
+        run: |
+          echo 'repos from previous job:'
+          echo '${{ needs.terraformapply.outputs.repos }}'
