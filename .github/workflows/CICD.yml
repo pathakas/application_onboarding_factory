@@ -406,6 +406,10 @@ jobs:
           echo '${{ needs.terraformapply.outputs.repos }}'
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 1
   
       - name: Set up Python
         uses: actions/setup-python@v5
