@@ -424,10 +424,15 @@ jobs:
         with:
           python-version: "3.11"
       
-      - name: update artifacts
+      - name: Generate tfvars
         run: |
           cd factory
-          python scripts/generate_tfvars.py ../target
-          ls -lrth
+          python3 generate_tfvars.py ../target/terraform.tfvars
         env:
+          REPO_NAME: ${{ github.repository_owner }}/${{ matrix.repo }}
           APP_ENVT: ${{ github.event.inputs.environments }}
+          ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
+          LOB_CODE: ${{ github.event.inputs.lob_code }}
+          APP_CODE: ${{ github.event.inputs.app_code }}
+          APP_NAME: ${{ github.event.inputs.application_name }}
+          APP_PLATFORM: ${{ github.event.inputs.application_platform }}
