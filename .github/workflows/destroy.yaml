@@ -48,7 +48,7 @@ jobs:
           python-version: "3.11"
 
       - name: Generate terraform.tfvars from template, env, and input.json
-        run: python templatize.py
+        run: python scripts/templatize.py
         env:
           # Use workflow input
           ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
