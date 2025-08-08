@@ -396,6 +396,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 3
       matrix:
         repo: ${{ fromJSON(needs.terraformapply.outputs.repos || '[]') }}
     steps:
@@ -403,3 +404,13 @@ jobs:
         run: |
           echo 'repos from previous job:'
           echo '${{ needs.terraformapply.outputs.repos }}'
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Check Repos
+        run: ls -lrth
