@@ -377,3 +377,24 @@ jobs:
       #     token: ${{ secrets.GH_TOKEN }}
       #     repository: pathakas/app-service
       #     event-type: my-event
+            # Capture the list from state as JSON and set it as a job output
+      - name: Capture repository_names
+        id: capture
+        run: |
+          # If repository_names is a TF output of type list(string)
+          json=$(terraform output -json repository_names)
+          # Ensure it's compact JSON (matrix needs compact)
+          # If jq is not installed by default, remove -c (compact) — compact is nice-to-have.
+          echo "repos=${json}" >> "$GITHUB_OUTPUT"
+
+  per-repo:
+    name: Per-repo ops (${{ matrix.repo }})
+    needs: terraformapply
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        repo: ${{ fromJSON(needs.tf-apply.outputs.repos) }}
+    steps:
+      - name: Show which repo
+        run: echo "Working on ${{ matrix.repo }}"
