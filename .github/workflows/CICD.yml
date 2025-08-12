@@ -302,7 +302,6 @@ jobs:
           repository: ${{ github.repository_owner }}/${{ matrix.repo }}
           token: ${{ secrets.GH_TOKEN }}
           path: target
-          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -335,16 +334,28 @@ jobs:
               echo ""
             fi
           done
-          echo "Checking for files to commit:"
-          cd target
-          find . -name "*.tf" -o -name "*.tfvars" | grep -v "\.git" | head -20
 
-      - name: Create Pull Request with generated files
+      - name: Generate unique branch name
+        id: branch-name
+        run: echo "name=automated-infra-generation-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request with Auto-Commit and Branch
         uses: peter-evans/create-pull-request@v6
+        id: create-pr
         with:
           token: ${{ secrets.GH_TOKEN }}
           path: ./target
-          commit-message: "chore: automated infrastructure files generation from factory"
+          commit-message: |
+            chore: automated infrastructure files generation from factory
+            
+            Generated infrastructure files for all environments:
+            - Organization Code: ${{ github.event.inputs.organization_code }}
+            - LOB Code: ${{ github.event.inputs.lob_code }}
+            - Application Code: ${{ github.event.inputs.app_code }}
+            - Application Name: ${{ github.event.inputs.application_name }}
+            - Platform: ${{ github.event.inputs.application_platform }}
+            
+            Environments: ${{ github.event.inputs.environments }}
           title: "🤖 Automated Infrastructure Files Generation"
           body: |
             ## Automated Infrastructure Files Generation
@@ -368,7 +379,59 @@ jobs:
             ${{ github.event.inputs.environments }}
             ```
 
+            ### Branch Information:
+            - **Source Branch**: `${{ steps.branch-name.outputs.name }}`
+            - **Target Branch**: `main`
+
             This PR was automatically created by the application onboarding factory workflow.
-          branch: automated-infra-generation
+          branch: ${{ steps.branch-name.outputs.name }}
+          base: main
           delete-branch: true
           draft: false
+          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          committer: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+      - name: Get Checkov skips from target repository
+        id: get-checkov-skips
+        run: |
+          cd target
+          if [ -f "checkov_skips.cfg" ]; then
+            cfg_content=$(grep -v '^#' checkov_skips.cfg | tr -d '\r\n')
+            echo "checkov_skips=$cfg_content" >> $GITHUB_OUTPUT
+          else
+            echo "checkov_skips=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Central PR Plan Pipeline
+        if: steps.create-pr.outputs.pull-request-number
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          repository: McCainFoods/mf-core-pipelines
+          event-type: terraform-iac-pr-plan
+          client-payload: |
+            {
+              "triggered_by": "${{ github.repository_owner }}/${{ matrix.repo }}",
+              "pr_event": "terraform-iac-pr-plan",
+              "pr_event_action": "opened",
+              "pr_event_name": "pull_request",
+              "run_id": "${{ github.run_id }}",
+              "pr_number": "${{ steps.create-pr.outputs.pull-request-number }}",
+              "commit_sha": "${{ steps.create-pr.outputs.pull-request-head-sha }}",
+              "branch": "${{ steps.branch-name.outputs.name }}",
+              "checkov_skip_checks": "${{ steps.get-checkov-skips.outputs.checkov_skips }}"
+            }
+
+      - name: Add links to summary
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          echo "## Repository: ${{ matrix.repo }}" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Generated PR](https://github.com/${{ github.repository_owner }}/${{ matrix.repo }}/pull/${{ steps.create-pr.outputs.pull-request-number }})" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Central Pipeline Runs](https://github.com/McCainFoods/mf-core-pipelines/actions/workflows/iac-terraform-pr-create.yaml)" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Branch**: \`${{ steps.branch-name.outputs.name }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Summary for no changes
+        if: steps.create-pr.outputs.pull-request-number == ''
+        run: |
+          echo "## Repository: ${{ matrix.repo }}" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ No changes detected - skipped PR creation" >> $GITHUB_STEP_SUMMARY
