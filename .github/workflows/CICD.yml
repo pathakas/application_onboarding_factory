@@ -488,6 +488,12 @@ jobs:
             echo "checkov_skips=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Show push outputs (debug)
+        run: |
+          echo "changes_detected=${{ steps.push-branch.outputs.changes_detected }}"
+          echo "commit_hash=${{ steps.push-branch.outputs.commit_hash }}"
+          echo "pushed=${{ steps.push-branch.outputs.pushed }}"
+
       - name: Trigger Central PR Plan Pipeline
         if: steps.push-branch.outputs.committed == 'true'
         uses: peter-evans/repository-dispatch@v3
