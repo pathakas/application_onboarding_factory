@@ -457,6 +457,7 @@ jobs:
         run: echo "name=automated-infra-generation-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
 
       - name: Commit and Push Changes to Branch
+        id: push-branch 
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           repository: ./target
