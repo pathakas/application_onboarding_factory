@@ -335,12 +335,40 @@ jobs:
               echo ""
             fi
           done
+          echo "Checking for files to commit:"
+          cd target
+          find . -name "*.tf" -o -name "*.tfvars" | grep -v "\.git" | head -20
 
-      - name: Commit & push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Create Pull Request with generated files
+        uses: peter-evans/create-pull-request@v6
         with:
-          repository: ./target
-          commit_message: "chore: automated infrastructure files generation from factory [skip ci]"
-          file_pattern: "*/terraform.tfvars */*.tf"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
+          path: ./target
+          commit-message: "chore: automated infrastructure files generation from factory"
+          title: "🤖 Automated Infrastructure Files Generation"
+          body: |
+            ## Automated Infrastructure Files Generation
+
+            This PR contains automatically generated infrastructure files for all environments.
+
+            ### Generated Files:
+            - Environment-specific directories: `dev/`, `qat/`
+            - All `.tf` files with resolved placeholders
+            - Environment-specific `terraform.tfvars` files
+
+            ### Environment Configuration:
+            - **Organization Code**: ${{ github.event.inputs.organization_code }}
+            - **LOB Code**: ${{ github.event.inputs.lob_code }}
+            - **Application Code**: ${{ github.event.inputs.app_code }}
+            - **Application Name**: ${{ github.event.inputs.application_name }}
+            - **Platform**: ${{ github.event.inputs.application_platform }}
+
+            ### Environments:
+            ```json
+            ${{ github.event.inputs.environments }}
+            ```
+
+            This PR was automatically created by the application onboarding factory workflow.
+          branch: automated-infra-generation
+          delete-branch: true
+          draft: false
