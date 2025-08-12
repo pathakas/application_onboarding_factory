@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-import os, sys, json, re
+import os
+import sys
+import json
+import re
+import shutil
 from pathlib import Path
+
 
 def infer_repo_type(full_repo_name):
     """Extract foundation|infra|app from REPO_NAME."""
@@ -11,45 +16,199 @@ def infer_repo_type(full_repo_name):
     parts = repo.split("-")
     return parts[-2] if len(parts) >= 2 else "unknown"
 
+
 def replace_placeholders(content, env):
     """Replace placeholders ${{VAR}} with env values."""
     return re.sub(r"\$\{\{(\w+)\}\}", lambda m: env.get(m.group(1), m.group(0)), content)
 
+
+def find_terraform_files(source_dir):
+    """Find all .tf and .tfvars files in the source directory."""
+    terraform_files = []
+    source_path = Path(source_dir)
+    
+    # Find all .tf and .tfvars files
+    for pattern in ["*.tf", "*.tfvars"]:
+        terraform_files.extend(source_path.glob(pattern))
+    
+    # Also check subdirectories for modules
+    for subdir in source_path.iterdir():
+        if subdir.is_dir() and not subdir.name.startswith('.'):
+            for pattern in ["*.tf", "*.tfvars"]:
+                terraform_files.extend(subdir.glob(pattern))
+    
+    return terraform_files
+
+
+def copy_and_process_files(source_files, target_dir, env, repo_type, env_code):
+    """Copy and process all Terraform files with token replacement."""
+    processed_files = []
+    
+    for source_file in source_files:
+        try:
+            content = source_file.read_text(encoding='utf-8')
+            
+            # Replace placeholders in the content
+            processed_content = replace_placeholders(content, env)
+            
+            # Determine target filename - keep terraform.tfvars as terraform.tfvars
+            target_filename = source_file.name
+            
+            # Create target file path, preserving directory structure for modules
+            relative_path = source_file.relative_to(source_file.parent.parent if source_file.parent.parent.name in ['modules', 'templates'] else source_file.parent)
+            target_file = target_dir / relative_path.parent / target_filename
+            
+            # Ensure target directory exists
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Write processed content
+            target_file.write_text(processed_content, encoding='utf-8')
+            processed_files.append(target_file)
+            
+            print(f"Processed: {source_file} -> {target_file}")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to process {source_file}: {e}")
+            continue
+    
+    return processed_files
+
+
+def copy_additional_files(source_dir, target_dir):
+    """Copy additional non-Terraform files that might be needed."""
+    additional_patterns = [
+        "*.json",
+        "*.yml", 
+        "*.yaml",
+        "*.md",
+        "*.sh",
+        ".terraform.lock.hcl"
+    ]
+    
+    source_path = Path(source_dir)
+    copied_files = []
+    
+    for pattern in additional_patterns:
+        for source_file in source_path.glob(pattern):
+            if source_file.is_file():
+                target_file = target_dir / source_file.name
+                try:
+                    shutil.copy2(source_file, target_file)
+                    copied_files.append(target_file)
+                    print(f"Copied: {source_file} -> {target_file}")
+                except Exception as e:
+                    print(f"[WARNING] Failed to copy {source_file}: {e}")
+    
+    return copied_files
+
+
+def validate_processed_files(files, env_code):
+    """Validate that all placeholders have been resolved."""
+    unresolved_files = []
+    
+    for file_path in files:
+        try:
+            content = file_path.read_text(encoding='utf-8')
+            unresolved_matches = re.findall(r"\$\{\{(\w+)\}\}", content)
+            
+            if unresolved_matches:
+                unresolved_files.append((file_path, unresolved_matches))
+                print(f"[WARNING] Unresolved placeholders in {file_path}: {unresolved_matches}")
+                
+        except Exception as e:
+            print(f"[ERROR] Failed to validate {file_path}: {e}")
+    
+    return unresolved_files
+
+
 def main():
-    # Path to terraform.tfvars (default: current dir)
-    tfvars_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("terraform.tfvars")
-
-    if not tfvars_path.exists():
-        print(f"[INFO] No terraform.tfvars found at: {tfvars_path}")
-        sys.exit(f"ERROR: terraform.tfvars not found at {tfvars_path}")
-
-    repo_type = infer_repo_type(os.environ.get("REPO_NAME", ""))
+    # Get target directory (where to copy files)
+    target_base_dir = Path(sys.argv[1]).parent if len(sys.argv) > 1 else Path(".")
+    
+    # Source directory (factory templates)
+    source_dir = Path("factory/templates") if Path("factory/templates").exists() else Path("templates")
+    if not source_dir.exists():
+        source_dir = Path(".")  # fallback to current directory
+    
+    print(f"[INFO] Source directory: {source_dir}")
+    print(f"[INFO] Target base directory: {target_base_dir}")
+    
+    # Get repository information
+    repo_name = os.environ.get("REPO_NAME", "")
+    repo_type = infer_repo_type(repo_name)
+    print(f"[INFO] Repository: {repo_name}")
     print(f"[INFO] Detected repo type: {repo_type}")
-
-    template = tfvars_path.read_text()
-
+    
     # Parse environments JSON
     try:
         envs = json.loads(os.environ.get("APP_ENVT", "[]"))
+        if not envs:
+            envs = [{"name": "default", "code": "default"}]  # fallback
     except Exception as e:
-        sys.exit(f"Invalid APP_ENVT JSON: {e}")
-
+        sys.exit(f"ERROR: Invalid APP_ENVT JSON: {e}")
+    
+    # Find all Terraform files in source directory
+    terraform_files = find_terraform_files(source_dir)
+    print(f"[INFO] Found {len(terraform_files)} Terraform files to process")
+    
+    if not terraform_files:
+        print("[WARNING] No Terraform files found in source directory")
+        return
+    
+    # Base environment variables
     base_env = dict(os.environ)
-
+    
+    # Process files for each environment
+    all_processed_files = []
     for env_obj in envs:
-        code = env_obj.get("code", "env").lower()
-        out_dir = tfvars_path.parent / code
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        out_file = out_dir / f"{repo_type}-{code}.tfvars"
+        env_code = env_obj.get("code", "default").lower()
+        env_name = env_obj.get("name", env_code)
+        
+        print(f"\n[INFO] Processing environment: {env_name} ({env_code})")
+        
+        # Create environment-specific directory
+        env_target_dir = target_base_dir / env_code
+        env_target_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Merge environment-specific variables
         merged_env = {**base_env, **env_obj}
-        rendered = replace_placeholders(template, merged_env)
+        
+        # Add some computed variables
+        merged_env.update({
+            'ENVIRONMENT_CODE': env_code,
+            'ENVIRONMENT_NAME': env_name,
+            'REPO_TYPE': repo_type,
+            'REPO_NAME_CLEAN': repo_name.split('/')[-1] if '/' in repo_name else repo_name
+        })
+        
+        # Process and copy Terraform files
+        processed_files = copy_and_process_files(
+            terraform_files, 
+            env_target_dir, 
+            merged_env, 
+            repo_type, 
+            env_code
+        )
+        
+        # Copy additional files
+        additional_files = copy_additional_files(source_dir, env_target_dir)
+        
+        all_processed_files.extend(processed_files)
+        
+        print(f"[INFO] Environment {env_code}: {len(processed_files)} files processed, {len(additional_files)} additional files copied")
+    
+    # Validate all processed files
+    print(f"\n[INFO] Validating {len(all_processed_files)} processed files...")
+    unresolved_files = validate_processed_files(all_processed_files, "all")
+    
+    if unresolved_files:
+        print(f"\n[ERROR] Found unresolved placeholders in {len(unresolved_files)} files:")
+        for file_path, placeholders in unresolved_files:
+            print(f"  {file_path}: {placeholders}")
+        sys.exit(1)
+    
+    print(f"\n[SUCCESS] Successfully processed {len(all_processed_files)} files across {len(envs)} environments")
 
-        if re.search(r"\$\{\{(\w+)\}\}", rendered):
-            sys.exit(f"Unresolved placeholders in {out_file}")
-
-        out_file.write_text(rendered)
-        print(f"Generated: {out_file}")
 
 if __name__ == "__main__":
     main()
