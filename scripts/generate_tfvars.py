@@ -1,214 +1,313 @@
-#!/usr/bin/env python3
-import os
-import sys
-import json
-import re
-import shutil
-from pathlib import Path
+name: CI
 
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: read
 
-def infer_repo_type(full_repo_name):
-    """Extract foundation|infra|app from REPO_NAME."""
-    repo = full_repo_name.split("/", 1)[1] if "/" in full_repo_name else full_repo_name
-    m = re.search(r"-(foundation|infra|app)-repo$", repo)
-    if m:
-        return m.group(1)
-    parts = repo.split("-")
-    return parts[-2] if len(parts) >= 2 else "unknown"
+on:
+  workflow_dispatch:
+    inputs:
+      organization_code:
+        description: 'Organization Code'
+        required: true
+        default: 'mf'
+      lob_code:
+        description: 'LOB Code'
+        required: true
+        default: 'daia'
+      app_code:
+        description: 'Application Code'
+        required: true
+        default: 'azraaa'
+      application_name:
+        description: 'Infra repo name'
+        required: true
+        default: 'sampleapp'
+      application_platform:
+        description: 'Application Platform'
+        required: true
+        default: 'reactjs'
+      environments:
+        description: "Environments JSON"
+        required: true
+        default: '[{"name":"Development","code":"dev","subscription_id":""},{"name":"QA","code":"qat","subscription_id":""}]'
 
+env:
+  TF_VERSION: "1.11.4"
+  PYTHON_VERSION: "3.11"
 
-def replace_placeholders(content, env):
-    """Replace placeholders ${{VAR}} with env values."""
-    return re.sub(r"\$\{\{(\w+)\}\}", lambda m: env.get(m.group(1), m.group(0)), content)
+jobs:
+  terraform-validation:
+    name: Terraform Validation & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-def find_terraform_files(source_dir):
-    """Find all .tf and .tfvars files in the source directory."""
-    terraform_files = []
-    source_path = Path(source_dir)
-    
-    # Find all .tf and .tfvars files
-    for pattern in ["*.tf", "*.tfvars"]:
-        terraform_files.extend(source_path.glob(pattern))
-    
-    # Also check subdirectories for modules
-    for subdir in source_path.iterdir():
-        if subdir.is_dir() and not subdir.name.startswith('.'):
-            for pattern in ["*.tf", "*.tfvars"]:
-                terraform_files.extend(subdir.glob(pattern))
-    
-    return terraform_files
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: .terraform
+          key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-${{ runner.os }}-
 
+      - name: Terraform Init
+        run: terraform init
 
-def copy_and_process_files(source_files, target_dir, env, repo_type, env_code):
-    """Copy and process all Terraform files with token replacement."""
-    processed_files = []
-    
-    for source_file in source_files:
-        try:
-            content = source_file.read_text(encoding='utf-8')
-            
-            # Replace placeholders in the content
-            processed_content = replace_placeholders(content, env)
-            
-            # Determine target filename - keep terraform.tfvars as terraform.tfvars
-            target_filename = source_file.name
-            
-            # Create target file path, preserving directory structure for modules
-            relative_path = source_file.relative_to(source_file.parent.parent if source_file.parent.parent.name in ['modules', 'templates'] else source_file.parent)
-            target_file = target_dir / relative_path.parent / target_filename
-            
-            # Ensure target directory exists
-            target_file.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Write processed content
-            target_file.write_text(processed_content, encoding='utf-8')
-            processed_files.append(target_file)
-            
-            print(f"Processed: {source_file} -> {target_file}")
-            
-        except Exception as e:
-            print(f"[ERROR] Failed to process {source_file}: {e}")
-            continue
-    
-    return processed_files
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
+      - name: Terraform Validate
+        run: terraform validate
 
-def copy_additional_files(source_dir, target_dir):
-    """Copy additional non-Terraform files that might be needed."""
-    additional_patterns = [
-        "*.json",
-        "*.yml", 
-        "*.yaml",
-        "*.md",
-        "*.sh",
-        ".terraform.lock.hcl"
-    ]
-    
-    source_path = Path(source_dir)
-    copied_files = []
-    
-    for pattern in additional_patterns:
-        for source_file in source_path.glob(pattern):
-            if source_file.is_file():
-                target_file = target_dir / source_file.name
-                try:
-                    shutil.copy2(source_file, target_file)
-                    copied_files.append(target_file)
-                    print(f"Copied: {source_file} -> {target_file}")
-                except Exception as e:
-                    print(f"[WARNING] Failed to copy {source_file}: {e}")
-    
-    return copied_files
+      - name: Run TfSec Security Scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: true
 
+      # Uncomment when ready to use Checkov
+      # - name: Run Checkov Security Scan
+      #   uses: bridgecrewio/checkov-action@v12
+      #   with:
+      #     directory: .
+      #     framework: terraform
+      #     soft_fail: true
 
-def validate_processed_files(files, env_code):
-    """Validate that all placeholders have been resolved."""
-    unresolved_files = []
-    
-    for file_path in files:
-        try:
-            content = file_path.read_text(encoding='utf-8')
-            unresolved_matches = re.findall(r"\$\{\{(\w+)\}\}", content)
-            
-            if unresolved_matches:
-                unresolved_files.append((file_path, unresolved_matches))
-                print(f"[WARNING] Unresolved placeholders in {file_path}: {unresolved_matches}")
-                
-        except Exception as e:
-            print(f"[ERROR] Failed to validate {file_path}: {e}")
-    
-    return unresolved_files
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: terraform-validation
+    outputs:
+      cache-key: ${{ steps.cache.outputs.cache-hit }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-def main():
-    # Get target directory (where to copy files)
-    target_base_dir = Path(sys.argv[1]).parent if len(sys.argv) > 1 else Path(".")
-    
-    # Source directory (factory templates)
-    source_dir = Path("factory/templates") if Path("factory/templates").exists() else Path("templates")
-    if not source_dir.exists():
-        source_dir = Path(".")  # fallback to current directory
-    
-    print(f"[INFO] Source directory: {source_dir}")
-    print(f"[INFO] Target base directory: {target_base_dir}")
-    
-    # Get repository information
-    repo_name = os.environ.get("REPO_NAME", "")
-    repo_type = infer_repo_type(repo_name)
-    print(f"[INFO] Repository: {repo_name}")
-    print(f"[INFO] Detected repo type: {repo_type}")
-    
-    # Parse environments JSON
-    try:
-        envs = json.loads(os.environ.get("APP_ENVT", "[]"))
-        if not envs:
-            envs = [{"name": "default", "code": "default"}]  # fallback
-    except Exception as e:
-        sys.exit(f"ERROR: Invalid APP_ENVT JSON: {e}")
-    
-    # Find all Terraform files in source directory
-    terraform_files = find_terraform_files(source_dir)
-    print(f"[INFO] Found {len(terraform_files)} Terraform files to process")
-    
-    if not terraform_files:
-        print("[WARNING] No Terraform files found in source directory")
-        return
-    
-    # Base environment variables
-    base_env = dict(os.environ)
-    
-    # Process files for each environment
-    all_processed_files = []
-    for env_obj in envs:
-        env_code = env_obj.get("code", "default").lower()
-        env_name = env_obj.get("name", env_code)
-        
-        print(f"\n[INFO] Processing environment: {env_name} ({env_code})")
-        
-        # Create environment-specific directory
-        env_target_dir = target_base_dir / env_code
-        env_target_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Merge environment-specific variables
-        merged_env = {**base_env, **env_obj}
-        
-        # Add some computed variables
-        merged_env.update({
-            'ENVIRONMENT_CODE': env_code,
-            'ENVIRONMENT_NAME': env_name,
-            'REPO_TYPE': repo_type,
-            'REPO_NAME_CLEAN': repo_name.split('/')[-1] if '/' in repo_name else repo_name
-        })
-        
-        # Process and copy Terraform files
-        processed_files = copy_and_process_files(
-            terraform_files, 
-            env_target_dir, 
-            merged_env, 
-            repo_type, 
-            env_code
-        )
-        
-        # Copy additional files
-        additional_files = copy_additional_files(source_dir, env_target_dir)
-        
-        all_processed_files.extend(processed_files)
-        
-        print(f"[INFO] Environment {env_code}: {len(processed_files)} files processed, {len(additional_files)} additional files copied")
-    
-    # Validate all processed files
-    print(f"\n[INFO] Validating {len(all_processed_files)} processed files...")
-    unresolved_files = validate_processed_files(all_processed_files, "all")
-    
-    if unresolved_files:
-        print(f"\n[ERROR] Found unresolved placeholders in {len(unresolved_files)} files:")
-        for file_path, placeholders in unresolved_files:
-            print(f"  {file_path}: {placeholders}")
-        sys.exit(1)
-    
-    print(f"\n[SUCCESS] Successfully processed {len(all_processed_files)} files across {len(envs)} environments")
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
+      - name: Cache Terraform providers
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .terraform
+          key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-${{ runner.os }}-
 
-if __name__ == "__main__":
-    main()
+      - name: Generate terraform.tfvars
+        run: python scripts/templatize.py
+        env:
+          ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
+          LOB_CODE: ${{ github.event.inputs.lob_code }}
+          APP_CODE: ${{ github.event.inputs.app_code }}
+          APP_NAME: ${{ github.event.inputs.application_name }}
+          APP_PLATFORM: ${{ github.event.inputs.application_platform }}
+          APP_ENVT: ${{ github.event.inputs.environments }}
+          # Foundation secrets
+          GH_TOKEN_FOUNDATION: ${{ secrets.GH_TOKEN_FOUNDATION }}
+          AZURE_SUBSCRIPTION_ID_FOUNDATION: ${{ secrets.AZURE_SUBSCRIPTION_ID_FOUNDATION }}
+          TF_API_TOKEN_FOUNDATION: ${{ secrets.TF_API_TOKEN_FOUNDATION }}
+          AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
+          AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
+          AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
+          # Infra secrets
+          GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
+          AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
+          TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
+          AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
+          AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
+          AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
+          # App secrets
+          GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
+          AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
+          TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
+          AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
+          AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
+          AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
+
+      - name: Terraform Init
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
+          TF_VAR_tfe_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: |
+            tfplan
+            terraform.tfvars
+          retention-days: 5
+
+      - name: Upload Plan JSON for Security Scans
+        run: |
+          terraform show -json tfplan > tfplan.json
+          
+      - name: Upload Plan JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-json
+          path: tfplan.json
+          retention-days: 5
+
+  security-scans:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    strategy:
+      matrix:
+        scanner: [checkov, compliance]
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Plan JSON
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-json
+
+      - name: Run Checkov Scan
+        if: matrix.scanner == 'checkov'
+        run: |
+          pip install checkov
+          # checkov -f tfplan.json --soft-fail
+          echo "Checkov scan completed (currently disabled)"
+
+      - name: Run Terraform Compliance
+        if: matrix.scanner == 'compliance'
+        run: |
+          pip install terraform-compliance
+          # terraform-compliance -p tfplan.json -f features/
+          echo "Terraform compliance check completed (currently disabled)"
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: [terraform-plan, security-scans]
+    outputs:
+      repos: ${{ steps.capture-repos.outputs.repos }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
+          TF_VAR_tfe_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Capture Repository Names
+        id: capture-repos
+        run: |
+          repos=$(terraform output -json repository_names 2>/dev/null || echo '[]')
+          if [ "$repos" = "null" ] || [ -z "$repos" ]; then
+            repos='[]'
+          fi
+          echo "repos=$repos" >> "$GITHUB_OUTPUT"
+          echo "Captured repositories: $repos"
+
+  repository-operations:
+    name: Repository Operations
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    if: ${{ needs.terraform-apply.outputs.repos != '[]' && needs.terraform-apply.outputs.repos != 'null' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        repo: ${{ fromJSON(needs.terraform-apply.outputs.repos) }}
+    steps:
+      - name: Checkout Factory Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          path: factory
+
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.repo }}
+          token: ${{ secrets.GH_TOKEN }}
+          path: target
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate Repository Infrastructure Files
+        run: python3 factory/scripts/generate_tfvars.py target
+        env:
+          REPO_NAME: ${{ github.repository_owner }}/${{ matrix.repo }}
+          APP_ENVT: ${{ github.event.inputs.environments }}
+          ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
+          LOB_CODE: ${{ github.event.inputs.lob_code }}
+          APP_CODE: ${{ github.event.inputs.app_code }}
+          APP_NAME: ${{ github.event.inputs.application_name }}
+          APP_PLATFORM: ${{ github.event.inputs.application_platform }}
+          # Additional computed variables
+          CURRENT_TIMESTAMP: ${{ github.run_number }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+
+      - name: Verify Generated Files
+        run: |
+          echo "Generated files in target repository:"
+          find target/ -name "*.tf" -o -name "*.tfvars" | head -20
+          echo ""
+          echo "Directory structure:"
+          tree target/ -I '.git' || ls -la target/
+          echo ""
+          echo "Sample generated content (first .tfvars file):"
+          find target/ -name "*.tfvars" | head -1 | xargs head -10 || echo "No .tfvars files found"
+
+      - name: Commit and Push Changes  
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          repository: ./target
+          commit_message: "chore: automated infrastructure files generation from factory [skip ci]"
+          file_pattern: "*.tf *.tfvars *.json *.yml *.yaml"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
