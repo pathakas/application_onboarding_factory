@@ -492,10 +492,10 @@ jobs:
         run: |
           echo "changes_detected=${{ steps.push-branch.outputs.changes_detected }}"
           echo "commit_hash=${{ steps.push-branch.outputs.commit_hash }}"
-          echo "pushed=${{ steps.push-branch.outputs.pushed }}"
+          echo "pushed=${{ steps.push-branch.outputs }}"
 
       - name: Trigger Central PR Plan Pipeline
-        if: steps.push-branch.outputs.committed == 'true'
+        if: steps.push-branch.outputs.changes_detected == 'true'
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GH_TOKEN }}
