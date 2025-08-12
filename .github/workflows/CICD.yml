@@ -491,8 +491,8 @@ jobs:
         if: steps.push-branch.outputs.committed == 'true'
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
-          repository: McCainFoods/mf-core-pipelines
+          token: ${{ secrets.GH_TOKEN }}
+          repository: pathakas/mf-core-pipelines
           event-type: terraform-iac-pr-plan
           client-payload: |
             {
