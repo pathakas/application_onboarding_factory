@@ -1,17 +1,11 @@
 name: CI
 
 permissions:
-  contents: read
-  id-token: write  # only if you're using OIDC
-  pull-requests: read  # only if needed for PR jobs
+  contents: write          # needed to push & open PRs
+  pull-requests: write     # needed to open PRs
+  id-token: write
 
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  # push:
-  #   branches: [ "main" ]
-  # pull_request:
-  #   branches: [ "main" ]
-
   workflow_dispatch:
     inputs:
       organization_code:
@@ -38,348 +32,208 @@ on:
         description: "Environments JSON"
         required: true
         default: '[{"name":"Development","code":"dev","subscription_id":""},{"name":"QA","code":"qat","subscription_id":""}]'
-      # Add more as needed
-        
 
 jobs:
   terraform-format:
-    name: Terraform Format
     runs-on: ubuntu-latest
-    # environment: production
     env:
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-        
-      - name: Terraform Format
-        run: terraform fmt -check -recursive
+      - run: terraform init
+      - run: terraform fmt -check -recursive
 
   terraform-validate:
-    name: Terraform Validate
     runs-on: ubuntu-latest
-    # environment: production
     env:
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-        
-      - name: Terraform Validate
-        run: terraform validate
+      - run: terraform init
+      - run: terraform validate
 
   terraform-tfsec:
-    name: Terraform TfSec Scanning
     runs-on: ubuntu-latest
-    # environment: production
     env:
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-        
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
+      - run: terraform init
+      - uses: aquasecurity/tfsec-action@v1.0.0
 
   terraform-checkov:
-    name: Terraform Checkov Scanning
     runs-on: ubuntu-latest
-    # environment: production
     env:
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-        
-       # - name: Run Checkov
-        #  uses: bridgecrewio/checkov-action@v12
-        #  with:
-          #  directory: .
-          #  framework: terraform
+      - run: terraform init
+      # - uses: bridgecrewio/checkov-action@v12
+      #   with:
+      #     directory: .
+      #     framework: terraform
 
   terraform-plan:
-    name: Terraform Plan
     runs-on: ubuntu-latest
-    needs: [
-      terraform-format,
-      terraform-validate,
-      terraform-tfsec,
-      terraform-checkov
-    ]
+    needs: [terraform-format, terraform-validate, terraform-tfsec, terraform-checkov]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Generate terraform.tfvars from template, env, and input.json
+      - name: Generate terraform.tfvars from template
         run: python scripts/templatize.py
         env:
-          # Use workflow input
           ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
           LOB_CODE: ${{ github.event.inputs.lob_code }}
           APP_CODE: ${{ github.event.inputs.app_code }}
           APP_NAME: ${{ github.event.inputs.application_name }}
           APP_PLATFORM: ${{ github.event.inputs.application_platform }}
           APP_ENVT: ${{ github.event.inputs.environments }}
-          # Foundational Repo Settings
           GH_TOKEN_FOUNDATION: ${{ secrets.GH_TOKEN_FOUNDATION }}
           AZURE_SUBSCRIPTION_ID_FOUNDATION: ${{ secrets.AZURE_SUBSCRIPTION_ID_FOUNDATION }}
           TF_API_TOKEN_FOUNDATION: ${{ secrets.TF_API_TOKEN_FOUNDATION }}
           AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
           AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
           AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
-          # Infra Repo Settings
           GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
           AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
           TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
           AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
           AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
           AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
-          # App Repo Settings
           GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
           AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
           TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
           AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
           AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
           AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
-
-      - name: Display generated tfvars (debug)
-        run: cat terraform.tfvars 
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - run: cat terraform.tfvars
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      # - name: Log in to Azure
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-      #     enable-AzPSSession: true
-              
-      - name: Terraform Plan                
+      - run: terraform init
+      - name: Terraform Plan
         run: terraform plan -out=plan.out
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
           TF_VAR_tfe_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Upload plan
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: plan.out
 
   checkov:
-    name: checkov Plan
     runs-on: ubuntu-latest
     needs: terraform-plan
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-
-      - name: Download plan
-        uses: actions/download-artifact@v4
+      - run: terraform init
+      - uses: actions/download-artifact@v4
         with:
           name: tfplan
           path: .
-
-      - name: Convert to JSON
-        run: terraform show -json plan.out > tfplan.json
-
-      # - name: Run Checkov
-      #   uses: bridgecrewio/checkov-action@master
+      - run: terraform show -json plan.out > tfplan.json
+      # - uses: bridgecrewio/checkov-action@master
       #   with:
       #     file: tfplan.json
 
   compliance:
-    name: Terraform Compliance
     runs-on: ubuntu-latest
     needs: terraform-plan
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      - name: Terraform Init
-        run: terraform init 
-
-      - name: Download plan
-        uses: actions/download-artifact@v4
+      - run: terraform init
+      - uses: actions/download-artifact@v4
         with:
           name: tfplan
           path: .
-
-      - name: Convert to JSON
-        run: terraform show -json plan.out > tfplan.json
-
-      - name: Install terraform-compliance
-        run: |
-          pip install terraform-compliance
-
-      # - name: Run terraform-compliance
-      #   run: terraform-compliance -p tfplan.json -f features/
+      - run: terraform show -json plan.out > tfplan.json
+      - run: pip install terraform-compliance
+      # - run: terraform-compliance -p tfplan.json -f features/
 
   terraform-apply:
-    name: Terraform Apply
     runs-on: ubuntu-latest
     needs: [checkov, compliance]
     outputs:
-      repos: ${{ steps.capture.outputs.repos }}   # <-- expose step output
-
+      repos: ${{ steps.capture.outputs.repos }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Generate terraform.tfvars from template, env, and input.json
+      - name: Generate terraform.tfvars from template
         run: python scripts/templatize.py
         env:
-          # Use workflow input
           ORGANIZATION_CODE: ${{ github.event.inputs.organization_code }}
           LOB_CODE: ${{ github.event.inputs.lob_code }}
           APP_CODE: ${{ github.event.inputs.app_code }}
           APP_NAME: ${{ github.event.inputs.application_name }}
           APP_PLATFORM: ${{ github.event.inputs.application_platform }}
           APP_ENVT: ${{ github.event.inputs.environments }}
-          # Foundational Repo Settings
           GH_TOKEN_FOUNDATION: ${{ secrets.GH_TOKEN_FOUNDATION }}
           AZURE_SUBSCRIPTION_ID_FOUNDATION: ${{ secrets.AZURE_SUBSCRIPTION_ID_FOUNDATION }}
           TF_API_TOKEN_FOUNDATION: ${{ secrets.TF_API_TOKEN_FOUNDATION }}
           AAD_CLIENT_ID_FOUNDATION: ${{ secrets.AAD_CLIENT_ID_FOUNDATION }}
           AAD_CLIENT_SECRET_FOUNDATION: ${{ secrets.AAD_CLIENT_SECRET_FOUNDATION }}
           AZURE_CREDENTIALS_FOUNDATION: ${{ secrets.AZURE_CREDENTIALS_FOUNDATION }}
-          # Infra Repo Settings
           GH_TOKEN_INFRA: ${{ secrets.GH_TOKEN_INFRA }}
           AZURE_SUBSCRIPTION_ID_INFRA: ${{ secrets.AZURE_SUBSCRIPTION_ID_INFRA }}
           TF_API_TOKEN_INFRA: ${{ secrets.TF_API_TOKEN_INFRA }}
           AAD_CLIENT_ID_INFRA: ${{ secrets.AAD_CLIENT_ID_INFRA }}
           AAD_CLIENT_SECRET_INFRA: ${{ secrets.AAD_CLIENT_SECRET_INFRA }}
           AZURE_CREDENTIALS_INFRA: ${{ secrets.AZURE_CREDENTIALS_INFRA }}
-          # App Repo Settings
           GH_TOKEN_APP: ${{ secrets.GH_TOKEN_APP }}
           AZURE_SUBSCRIPTION_ID_APP: ${{ secrets.AZURE_SUBSCRIPTION_ID_APP }}
           TF_API_TOKEN_APP: ${{ secrets.TF_API_TOKEN_APP }}
           AAD_CLIENT_ID_APP: ${{ secrets.AAD_CLIENT_ID_APP }}
           AAD_CLIENT_SECRET_APP: ${{ secrets.AAD_CLIENT_SECRET_APP }}
           AZURE_CREDENTIALS_APP: ${{ secrets.AZURE_CREDENTIALS_APP }}
-
-      - name: Display generated tfvars (debug)
-        run: cat terraform.tfvars 
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - run: cat terraform.tfvars
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.11.4
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-      # - name: Log in to Azure
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-      #     enable-AzPSSession: true
-
-      - name: Terraform Init
-        run: terraform init 
-
-      - name: Download plan
-        uses: actions/download-artifact@v4
+      - run: terraform init
+      - uses: actions/download-artifact@v4
         with:
           name: tfplan
-
-      - name: Terraform Plan
+      - name: Terraform Plan (fresh out for apply)
         run: terraform plan -out=tfplan
         env:
           TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
           TF_VAR_tfe_token: ${{ secrets.TF_API_TOKEN }}
-      
-      - name: Debug GH_TOKEN
-        run: |
-          echo "TF_VAR_github_token set to: ${TF_VAR_github_token:0:4}"
-        env:
-          TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
-          
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
         env:
           TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
           TF_VAR_github_token: ${{ secrets.GH_TOKEN }}
-      
-      # - name: Repository Dispatch
-      #   uses: peter-evans/repository-dispatch@v3
-      #   with:
-      #     token: ${{ secrets.GH_TOKEN }}
-      #     repository: pathakas/app-service
-      #     event-type: my-event
-            # Capture the list from state as JSON and set it as a job output
       - name: Capture repository_names
         id: capture
         run: |
@@ -401,11 +255,6 @@ jobs:
       matrix:
         repo: ${{ fromJSON(needs.terraform-apply.outputs.repos || '[]') }}
     steps:
-      - name: Debug repos output
-        run: |
-          echo 'repos from previous job:'
-          echo '${{ needs.terraform-apply.outputs.repos }}'
-
       - name: Checkout factory repo
         uses: actions/checkout@v4
         with:
@@ -420,12 +269,11 @@ jobs:
           path: target
           fetch-depth: 1
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.11"
 
-      - name: Generate infrastructure files for all environments
+      - name: Generate env infra files in target
         run: |
           cd target
           python3 ../factory/scripts/generate_tfvars.py
@@ -456,23 +304,22 @@ jobs:
         id: branch-name
         run: echo "name=automated-infra-generation-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
 
-      - name: Commit and Push Changes to Branch
-        id: push-branch 
+      - name: Commit & Push changes
+        id: push-branch
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           repository: ./target
           branch: ${{ steps.branch-name.outputs.name }}
           commit_message: |
             chore: automated infrastructure files generation from factory
-            
-            Generated infrastructure files for all environments:
+
+            Generated infrastructure files:
             - Organization Code: ${{ github.event.inputs.organization_code }}
             - LOB Code: ${{ github.event.inputs.lob_code }}
             - Application Code: ${{ github.event.inputs.app_code }}
             - Application Name: ${{ github.event.inputs.application_name }}
             - Platform: ${{ github.event.inputs.application_platform }}
-            
-            Environments: ${{ github.event.inputs.environments }}
+            - Environments: ${{ github.event.inputs.environments }}
           create_branch: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -488,27 +335,32 @@ jobs:
             echo "checkov_skips=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Create PR to main (target repo)
+        if: steps.push-branch.outputs.changes_detected == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_TOKEN }}     # PAT with repo access
+          path: ./target
+          base: main
+          branch: ${{ steps.branch-name.outputs.name }}
+          title: "chore: infra files from factory – ${{ matrix.repo }}"
+          body: |
+            Automated infra generation.
+
+            - Org: `${{ github.event.inputs.organization_code }}`
+            - LOB: `${{ github.event.inputs.lob_code }}`
+            - App: `${{ github.event.inputs.app_code }}`
+            - Name: `${{ github.event.inputs.application_name }}`
+            - Platform: `${{ github.event.inputs.application_platform }}`
+            - Environments: `${{ github.event.inputs.environments }}`
+            - Source run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          labels: iac, automated
+          draft: false
+
       - name: Show push outputs (debug)
         run: |
           echo "changes_detected=${{ steps.push-branch.outputs.changes_detected }}"
           echo "commit_hash=${{ steps.push-branch.outputs.commit_hash }}"
-          echo "pushed=${{ steps.push-branch.outputs }}"
 
-      - name: Trigger Central PR Plan Pipeline
-        if: steps.push-branch.outputs.changes_detected == 'true'
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          repository: pathakas/mf-core-pipelines
-          event-type: terraform-iac-pr-plan
-          client-payload: |
-            {
-              "triggered_by": "${{ github.repository_owner }}/${{ matrix.repo }}",
-              "pr_event": "terraform-iac-pr-plan",
-              "pr_event_action": "opened",
-              "pr_event_name": "pull_request",
-              "run_id": "${{ github.run_id }}",
-              "commit_sha": "${{ steps.push-branch.outputs.commit_hash }}",
-              "branch": "${{ steps.branch-name.outputs.name }}",
-              "checkov_skip_checks": "${{ steps.get-checkov-skips.outputs.checkov_skips }}"
-            }
+     
