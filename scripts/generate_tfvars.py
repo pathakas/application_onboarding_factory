@@ -79,6 +79,42 @@ def find_terraform_files(source_dir):
 
     return terraform_files
 
+# --- NEW: backend.tf safe replacement helpers ---
+
+def _is_placeholder(val: str) -> bool:
+    """Return True if the string still looks like a placeholder."""
+    if val is None:
+        return False
+    return bool(re.search(r'(\{\{.*\}\}|\$\{\{.*\}\}|__.*__)', val)) or val.strip() in {
+        "TFE_ORGANIZATION", "TFE_WORKSPACE_NAME", "TFE_WORSPACE_NAME"
+    }
+
+def safe_replace_backend(content: str, env: dict) -> str:
+    """
+    In backend.tf, replace organization/name only if they are placeholders.
+    Otherwise keep existing literal values.
+    Supports both 'organization = "..."' and 'name = "..."'.
+    """
+    org_pat = re.compile(r'(organization\s*=\s*)"([^"]*)"')
+    name_pat = re.compile(r'(\bname\s*=\s*)"([^"]*)"')
+
+    def repl_org(m):
+        existing = m.group(2)
+        if _is_placeholder(existing):
+            return f'{m.group(1)}"{env.get("TFE_ORGANIZATION", "")}"'
+        return m.group(0)
+
+    def repl_name(m):
+        existing = m.group(2)
+        if _is_placeholder(existing):
+            ws = env.get("TFE_WORKSPACE_NAME") or env.get("TFE_WORSPACE_NAME") or ""
+            return f'{m.group(1)}"{ws}"'
+        return m.group(0)
+
+    content = org_pat.sub(repl_org, content)
+    content = name_pat.sub(repl_name, content)
+    return content
+
 def copy_and_process_files(source_files, target_dir, env, source_path):
     """Copy and process all Terraform files with token replacement."""
     processed_files = []
@@ -87,6 +123,10 @@ def copy_and_process_files(source_files, target_dir, env, source_path):
         try:
             content = source_file.read_text(encoding='utf-8')
             processed_content = replace_placeholders(content, env)
+
+            # If it's backend.tf, only replace org/workspace when placeholders remain
+            if source_file.name == "backend.tf":
+                processed_content = safe_replace_backend(processed_content, env)
 
             # preserve relative structure for shallow modules
             if source_file.parent == source_path:
@@ -210,7 +250,6 @@ def main():
                    or merged_env.get("TFE_ORG")
                    or f"{org_code}-{lob_code}-{app_code}-{app_name}")
 
-        # Allow uppercase/lowercase repo type in name — your examples are lowercase; keep as-is
         fmt = {
             **merged_env,
             "ORGANIZATION_CODE": org_code,
