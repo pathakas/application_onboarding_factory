@@ -79,6 +79,17 @@ def find_terraform_files(source_dir):
 
     return terraform_files
 
+def find_root_terraform_files(source_dir):
+    """Find only the .tf and .tfvars files in the root directory."""
+    root_terraform_files = []
+    source_path = Path(source_dir)
+
+    # Only root .tf / .tfvars files
+    for pattern in ["*.tf", "*.tfvars"]:
+        root_terraform_files.extend(source_path.glob(pattern))
+
+    return root_terraform_files
+
 # --- NEW: backend.tf safe replacement helpers ---
 
 def _is_placeholder(val: str) -> bool:
@@ -186,6 +197,24 @@ def validate_processed_files(files):
 
     return unresolved
 
+def cleanup_root_terraform_files(source_dir):
+    """Delete all .tf and .tfvars files from the root directory after processing."""
+    root_files = find_root_terraform_files(source_dir)
+    deleted_files = []
+    
+    print(f"\n[INFO] Cleaning up {len(root_files)} Terraform files from root directory...")
+    
+    for file_path in root_files:
+        try:
+            file_path.unlink()  # Delete the file
+            deleted_files.append(file_path)
+            print(f"Deleted: {file_path}")
+        except Exception as e:
+            print(f"[ERROR] Failed to delete {file_path}: {e}")
+    
+    print(f"[INFO] Successfully deleted {len(deleted_files)} files from root directory")
+    return deleted_files
+
 # ---------- main ----------
 
 def main():
@@ -241,7 +270,7 @@ def main():
         merged_env.update({
             "ENVIRONMENT_CODE": env_code,
             "ENVIRONMENT_NAME": env_name,
-            "REPO_TYPE": repo_type,  # we’ll use this in workspace template
+            "REPO_TYPE": repo_type,  # we'll use this in workspace template
             "REPO_NAME_CLEAN": repo_name.split('/')[-1] if '/' in repo_name else repo_name
         })
 
@@ -296,6 +325,11 @@ def main():
         sys.exit(1)
 
     print(f"\n[SUCCESS] Successfully processed {len(all_processed_files)} files across {len(envs)} environments")
+
+    # NEW: Clean up root directory Terraform files after successful processing
+    cleanup_root_terraform_files(current_dir)
+    
+    print(f"\n[COMPLETE] All processing complete. Root Terraform files have been cleaned up.")
 
 if __name__ == "__main__":
     main()
