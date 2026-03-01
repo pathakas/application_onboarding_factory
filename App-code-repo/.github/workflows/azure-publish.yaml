@@ -1,0 +1,40 @@
+name: Build and Deploy React to Azure Function (Docker)
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AZURE_CONTAINER_REGISTRY: youracr.azurecr.io
+  IMAGE_NAME: react-function-image
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Log in to ACR
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build Docker image
+      run: |
+        docker build -t $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:latest .
+
+    - name: Push Docker image to ACR
+      run: |
+        docker push $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:latest
+
+    - name: Deploy to Azure Function App
+      uses: Azure/functions-container-action@v1
+      with:
+        app-name: node-func-app
+        image: ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
